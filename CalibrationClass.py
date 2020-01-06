@@ -57,7 +57,6 @@ class CameraCalibration(object):
         self.images_list = glob.glob(self.filepath)
         self.images_list.sort()
         
-        
         for i, fname in enumerate(self.images_list):
         
             print(i)
@@ -72,7 +71,8 @@ class CameraCalibration(object):
             ret, corners = self.find_circles_grid(img, mean_radii)
             
             # the orientation of the grid pattern, these three concentric circles, is important
-            OriFlag = self.judge_grid_orientation(con_circle)            
+            # OriFlag = self.judge_grid_orientation(con_circle)
+            OriFlag = 1            
             t = {1: lambda points: points, 
                  2: lambda points: points, 
                  3: lambda points: np.flip(np.reshape(points, (12,9,2)), (0,1)).reshape(108,2),
@@ -140,7 +140,7 @@ class CameraCalibration(object):
 
         max2intensity = circles_filter[indice[-2], 3]
 
-        if np.abs(max2intensity - circles_filter[indice[-4],3]) < 20:
+        if np.abs(max2intensity - np.median(circles_filter[:,3])) < 20:
             con_circle_center = circles_filter[indice[:3],:]
             white_back = False
         else:
@@ -156,7 +156,7 @@ class CameraCalibration(object):
             src_filled = cv2.circle(src, (center[0],center[1]), radii, point_color, thickness)
 
         if plot_flag:
-            plt.figure(figsize = (20, 20))
+            plt.figure()
             plt.subplot(121)
             plt.imshow(src, cmap = 'gray')
             plt.plot(circles_filter[:,0], circles_filter[:,1],'ro' )
@@ -238,7 +238,7 @@ class CameraCalibration(object):
             print('find', centers.shape[0], 'circles') 
         else:
             print('failed to find circles')
-            return None
+            return None, None
 
         cv2.drawChessboardCorners(src, self.patternSize, centers, isFound)
 
@@ -280,13 +280,16 @@ class StereoCalibration(CameraCalibration):
             ret_l, corners_l = self.find_circles_grid(img_l, mean_radii_l)
             ret_r, corners_r = self.find_circles_grid(img_r, mean_radii_r)
             
-            OriFlag_l = self.judge_grid_orientation(con_circles_l)            
-            OriFlag_r = self.judge_grid_orientation(con_circles_r)  
+            # OriFlag_l = self.judge_grid_orientation(con_circles_l)            
+            # OriFlag_r = self.judge_grid_orientation(con_circles_r)  
+            OriFlag_l = 1
+            OriFlag_r = 1
             
             t = {1: lambda points: points, 
                  2: lambda points: points, 
                  3: lambda points: np.flip(np.reshape(points, (12,9,2)), (0,1)).reshape(108,2),
                  4: lambda points: np.flip(np.reshape(points, (12,9,2)), (0,1)).reshape(108,2),}
+                 
                         
             
             # If found, add object points, image points (after refining them)
@@ -330,8 +333,8 @@ class StereoCalibration(CameraCalibration):
 
         self.camera_model = dict([('ret', ret), ('M1', M1), ('M2', M2), ('dist1', d1), ('dist2', d2), ('R', R), ('T', T)])
 
-'''
+
 if __name__ == '__main__':
-    filepath = '/home/photolab_ly/code/single_lens_dura_views/*.bmp'
-    TwoCamera = StereoCalibration(filepath)
-'''
+    filepath = r'G:\2019122011275252\*.bmp'
+    OneCamera = CameraCalibration(filepath)
+    OneCamera.calibrate_images()
